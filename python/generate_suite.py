@@ -4,34 +4,31 @@ from jinja2 import Template
 SUITE_TEMPLATE= Template("""<?xml version = "1.0" encoding = "UTF-8"?>
     <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
     <suite name="ELTA" thread-count = "1">                
-    <listeners>
-        <listener class-name="listeners.AnnotationTransformer"/>
-    </listeners>
-    <parameter name="TESTRAIL" value="{{testrail}}" />
-    <parameter name="TESTRAIL_URL" value="{{testrail_url}}" />
-    <parameter name="TESTRAIL_LOGIN" value="{{testrail_login}}" />
-    <parameter name="TESTRAIL_PASSWORD" value="{{testrail_password}}" />
-    <parameter name="TESTRAIL_TESTRUN" value="{{testrail_testrun}}" />
-    <parameter name="BUILD" value="{{build}}" />
-    <parameter name="DEVICE_MODEL" value="{{device_model}}" />
-    <parameter name="PLATFORM_NAME" value="{{platform_name}}" />
-    <parameter name="PLATFORM_VERSION" value="{{platform_version}}" />
-    <parameter name="DEVICE_NAME" value="{{device_name}}" />
-    <parameter name="APP_PACKAGE" value="{{app_package}}" />
-    <parameter name="APP" value="{{app}}" />
-    <parameter name="APPIUM_URL" value="{{appium_url}}" />
-    <parameter name="MITMDUMP_PATH" value="{{mitmdump_path}}" />
+        <listeners>
+            <listener class-name="listeners.AnnotationTransformer"/>
+        </listeners>
+        <parameter name="TESTRAIL" value="{{testrail}}" />
+        <parameter name="TESTRAIL_URL" value="{{testrail_url}}" />
+        <parameter name="TESTRAIL_LOGIN" value="{{testrail_login}}" />
+        <parameter name="TESTRAIL_PASSWORD" value="{{testrail_password}}" />
+        <parameter name="TESTRAIL_TESTRUN" value="{{testrail_testrun}}" />
+        <parameter name="BUILD" value="{{build}}" />
+        <parameter name="DEVICE_MODEL" value="{{device_model}}" />
+        <parameter name="PLATFORM_NAME" value="{{platform_name}}" />
+        <parameter name="PLATFORM_VERSION" value="{{platform_version}}" />
+        <parameter name="DEVICE_NAME" value="{{device_name}}" />
+        <parameter name="APP_PACKAGE" value="{{app_package}}" />
+        <parameter name="APP" value="{{app}}" />
+        <parameter name="APPIUM_URL" value="{{appium_url}}" />
+        <parameter name="MITMDUMP_PATH" value="{{mitmdump_path}}" />
         <test name = "{{suite}}">
             <classes>
-            {%  for key, value in test_classes.items() %} 
-                <class name = "{{key}}" > 
-                    <methods>
-                        {% for method in value %} 
-                            <include name="{{method}}"/>
-                        {% endfor %}
+            {%  for key, value in test_classes.items() %}
+            <class name = "{{key}}" > 
+                    <methods>{% for method in value %} 
+                            <include name="{{method}}"/>{% endfor %}
                          </methods>
-                    </class> 
-            {% endfor %}
+                    </class> {% endfor %}
             </classes>
         </test>
     </suite> 
@@ -78,6 +75,18 @@ def generate_caps(serial_number):
     dev_info["MITMDUMP_PATH"] = str(input("Путь к mitm dump - по умолчннию: /opt/homebrew/Cellar/mitmproxy/9.0.1/bin/mitmdump: ") or "/opt/homebrew/Cellar/mitmproxy/9.0.1/bin/mitmdump")
     return dev_info
 
+def get_class_methods(file_path):
+    methods = []
+    with open(file_path, "r", encoding="utf-8") as f:
+        tree = f. read().split("\n")
+    for string in tree:
+        if "//" not in string:
+            if "public void test" in string:
+                temp = string.replace("    public void ","")
+                temp = temp.replace("() {","")
+                methods.append(temp)
+    return methods
+
 def get_test_classes():
     classes = {}
     suite_name = input("Введите название suite: ")
@@ -86,8 +95,12 @@ def get_test_classes():
         if test_class == "break":
             break
         else:
-            class_methods = input("Введите названия методов через запятую: ")
-            classes[test_class] = class_methods.split(",")
+            input_methods_type = int(input("Введите 1 - для ввода названией классов вручную; 2 - Для получения всех методов из файла: "))
+            if(input_methods_type == 1):
+                class_methods == input("Введите названия методов через запятую: ")
+                classes[test_class] = class_methods.split(",")
+            if(input_methods_type == 2):
+                classes[test_class] = get_class_methods(input("Введите путь к файлу в формате С:\\folder\\JavaClass.java "))
     return suite_name, classes
         
 
